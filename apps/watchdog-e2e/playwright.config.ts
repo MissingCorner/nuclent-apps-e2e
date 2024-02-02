@@ -26,11 +26,4 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'nx serve watchdog',
-    url: baseURL,
-    reuseExistingServer: !process.env['CI'],
-    cwd: workspaceRoot,
-  },
 })
