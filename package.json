@@ -8,6 +8,15 @@
     "@nx/js": "17.3.1",
     "@nx/playwright": "^17.3.1",
     "@playwright/test": "^1.36.0",
+    "@nx/eslint": "17.3.0",
+    "@nx/eslint-plugin": "17.3.0",
+    "@typescript-eslint/eslint-plugin": "6.20.0",
+    "@typescript-eslint/parser": "6.20.0",
+    "eslint": "8.48.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-import": "^2.28",
+    "eslint-plugin-unused-imports": "^3",
+    "prettier": "2.8",
     "nx": "17.3.1"
   },
   "workspaces": [
