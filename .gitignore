@@ -39,3 +39,9 @@ testem.log
 Thumbs.db
 
 .nx/cache
+ 
+playwright/.auth
+
+.env.local
+
+requiredData.txt
