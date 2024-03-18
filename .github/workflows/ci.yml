@@ -5,28 +5,66 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
-permissions:
-  actions: read
-  contents: read
+env:
+  SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK}}
+  TEMPLATE_API_URL: ${{secrets.TEMPLATE_API_URL}}
+  KUBE_CONFIG_E2E: ${{secrets.KUBE_CONFIG_E2E}}
+  DOMAIN_E2E: ${{secrets.DOMAIN_E2E}}
 
 jobs:
-  main:
-    runs-on: ubuntu-latest
+  e2e:
+    name: E2E Test
+    runs-on: [self-hosted, nuclent-frontend-e2e]
+    needs: check
+    container:
+      image: harbor.common.nuclent.com/library/node-krakend:node-18
+      credentials:
+        username: ${{secrets.REGISTRY_USER}}
+        password: ${{secrets.REGISTRY_PASSWORD}}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # Cache node_modules
-      - uses: actions/setup-node@v3
+      - name: End to end
+        shell: bash
+        run: |
+          resource=commit-${{ github.sha }}
+          resource_name=${resource:0:15}
+          template_symbol='<<github-template>>'
+          domain="${DOMAIN_E2E}"
+          version='latest'
+          if [[ "$GITHUB_BASE_REF" =~ ^"hotfix/v" ]];then
+            version=${GITHUB_BASE_REF#"hotfix/"} 
+          fi
+
+          echo -n "${KUBE_CONFIG_E2E}" | base64 --decode >> .kubeconfig
+          curl "$TEMPLATE_API_URL/v1/f/loadTemplateCi?input_version=$version" \
+            -X 'POST' \
+            -H 'Accept: application/json, text/plain, */*' \
+            -H 'X-Nc-Tenant: tasks' \
+            | jq '.loadTemplateCiOuptut.content.content[]' \
+            | sed "s/$template_symbol/$resource_name/g" > manifest.json
+          trap "kubectl --kubeconfig .kubeconfig delete -f manifest.json" EXIT
+          kubectl --kubeconfig .kubeconfig apply -f manifest.json
+          echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          yarn --silent --ignore-scripts --frozen-lockfile
+          yarn playwright install --with-deps chromium
+          sleep 120
+          VITE_API_HOST=http://$resource_name.$domain yarn nx run-many -t e2e --all
+      - name: Upload test result
+        uses: actions/upload-artifact@v3
+        if: failure()
         with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
-
-      # Uncomment to enable task distribution. --stop-agents-after is optional, but allows idle agents to shut down once the "build" targets have been requested
-      # - run: npx nx-cloud start-ci-run --distribute-on="5 linux-medium-js" --stop-agents-after="build"
-
-      - run: npx nx-cloud record -- nx format:check
-      - run: npx nx affected -t=lint,test,build
+          name: Test result
+          path: |
+            dist/.playwright/apps/core-frontend-e2e/playwright-report
+            dist/.playwright/apps/core-frontend-e2e/test-output
+          retention-days: 3
+      - uses: act10ns/slack@v2.0.0
+        if: failure()
+        with:
+          status: failure
+          steps: ${{toJson(steps)}}
