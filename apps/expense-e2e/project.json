@@ -1,0 +1,23 @@
+{
+  "name": "expense-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/expense-e2e/src",
+  "projectType": "application",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/dist/.playwright/apps/expense-e2e"],
+      "options": {
+        "config": "apps/expense-e2e/playwright.config.ts",
+        "ui": true,
+        "headed": false,
+        "skipInstall": true
+      }
+    } 
+  },
+  "tags": []
+}
