@@ -36,19 +36,6 @@ jobs:
           domain="${DOMAIN_E2E}"
           version='latest'
 
-          env
-          echo $resource
-          echo $resource_name
-          echo $template_symbol
-          echo $domain
-          echo $version
-          echo $SLACK_WEBHOOK_URL
-          echo $TEMPLATE_API_URL
-          echo $KUBE_CONFIG_E2E
-          echo $DOMAIN_E2E
-
-
-
           if [[ "$GITHUB_BASE_REF" =~ ^"hotfix/v" ]];then
             version=${GITHUB_BASE_REF#"hotfix/"} 
           fi
@@ -60,6 +47,9 @@ jobs:
             -H 'X-Nc-Tenant: tasks' \
             | jq '.loadTemplateCiOuptut.content.content[]' \
             | sed "s/$template_symbol/$resource_name/g" > manifest.json
+          
+          cat manifest.json
+
           trap "kubectl --kubeconfig .kubeconfig delete -f manifest.json" EXIT
           kubectl --kubeconfig .kubeconfig apply -f manifest.json
           echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
