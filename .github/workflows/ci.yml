@@ -53,8 +53,8 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
           yarn --silent --ignore-scripts --frozen-lockfile
           yarn playwright install --with-deps chromium
-          sleep 120
-          VITE_API_HOST=http://$resource_name.$domain yarn nx run-many -t e2e --all
+          sleep 60
+          BASE_URL=http://$resource_name.$domain yarn nx run-many -t e2e --all
       - name: Upload test result
         uses: actions/upload-artifact@v3
         if: failure()
