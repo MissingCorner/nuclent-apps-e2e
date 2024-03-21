@@ -36,7 +36,7 @@ jobs:
           domain="${DOMAIN_E2E}"
           version='latest'
 
-
+          env
           echo $resource
           echo $resource_name
           echo $template_symbol
