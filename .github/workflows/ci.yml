@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK}}
+  SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
   TEMPLATE_API_URL: ${{secrets.TEMPLATE_API_URL}}
   KUBE_CONFIG_E2E: ${{secrets.KUBE_CONFIG_E2E}}
   DOMAIN_E2E: ${{secrets.DOMAIN_E2E}}
@@ -37,8 +37,15 @@ jobs:
           version='latest'
 
 
-          
-          while true; do echo; sleep 2; done
+          echo $resource
+          echo $resource_name
+          echo $template_symbol
+          echo $domain
+          echo $version
+          echo $SLACK_WEBHOOK_URL
+          echo $TEMPLATE_API_URL
+          echo $KUBE_CONFIG_E2E
+          echo $DOMAIN_E2E
 
 
 
