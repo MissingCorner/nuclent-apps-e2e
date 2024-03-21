@@ -35,6 +35,13 @@ jobs:
           template_symbol='<<github-template>>'
           domain="${DOMAIN_E2E}"
           version='latest'
+
+
+          
+          while true; do echo; sleep 2; done
+
+
+
           if [[ "$GITHUB_BASE_REF" =~ ^"hotfix/v" ]];then
             version=${GITHUB_BASE_REF#"hotfix/"} 
           fi
