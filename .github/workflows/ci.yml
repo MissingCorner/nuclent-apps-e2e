@@ -18,7 +18,6 @@ jobs:
   e2e:
     name: E2E Test
     runs-on: [self-hosted, nuclent-frontend-e2e]
-    needs: check
     container:
       image: harbor.common.nuclent.com/library/node-krakend:node-18
       credentials:
