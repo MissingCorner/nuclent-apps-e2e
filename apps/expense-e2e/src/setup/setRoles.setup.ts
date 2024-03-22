@@ -8,6 +8,7 @@ const roleFile = path.join(__dirname, "./roles.json");
 const usersFile = path.join(__dirname, "./users.json");
 
 const email = process.env.EMAIL;
+const subEmail = process.env.SUB_EMAIL;
 
 interface Role {
   reportsToRole: {} | null;
@@ -139,11 +140,12 @@ setup.describe("users", () => {
     const data = await fs.readFile(usersFile, "utf8");
     const users: User[] = JSON.parse(data);
     const u0 = users.find((user) => user.username === "u0")?.id;
+    const u1 = users.find((user) => user.username === "u1")?.id;
 
-    console.log("manager id:" + u0);
+    const baseEditRecord = baseURL + `v1/d/user`;
 
     // add email to u0 record
-    const updateManagerEmail = await request.put(baseURL + `v1/d/user/${u0}`, {
+    const updateManagerEmail = await request.put(`${baseEditRecord}/${u0}`, {
       headers: {
         Authorization: "Bearer " + token,
         "Content-Type": "application/json",
@@ -153,6 +155,53 @@ setup.describe("users", () => {
       }),
     });
 
+    const updateSecondEmail = await request.put(`${baseEditRecord}/${u1}`, {
+      headers: {
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify({
+        email: subEmail,
+      }),
+    });
+
     console.log(updateManagerEmail);
+    expect(updateManagerEmail.status()).toBe(200);
+    expect(updateSecondEmail.status()).toBe(200);
   });
+
+  //   // update manager profile obj access
+  //   setup.afterAll(async ({ request }) => {
+  //     const baseObjectAccess = baseURL + `v1/profile-object/Manager`;
+  //     const headers = {
+  //       Authorization: "Bearer " + token,
+  //       "Content-Type": "application/json",
+  //     };
+
+  //     // a. get all access first
+  //     const req = await request.get(baseObjectAccess, {
+  //       headers,
+  //     });
+  //     const res = await req.json();
+
+  //     // b. convert
+  //     const body = Object.keys(res).map((key) => {
+  //       const { displayName, ...access } = res[key];
+
+  //       return {
+  //         objName: key,
+  //         access: key === "user" ? { ...access, read: true } : access,
+  //       };
+  //     });
+
+  //     // c. put
+  //     const updateAccess = await request.put(baseObjectAccess, {
+  //       headers,
+  //       data: JSON.stringify({
+  //         items: [...body],
+  //       }),
+  //     });
+
+  //     expect(updateAccess.status()).toBe(200);
+  //   });
 });

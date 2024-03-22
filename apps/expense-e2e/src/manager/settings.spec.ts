@@ -1,34 +1,49 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 import { baseURL, managerFile } from "../../playwright.config";
 
-const email = process.env.EMAIL!;
+interface ActionProps {
+  page: Page;
+  // amount
+  amount: number;
+  amountDes: string;
+  // email
+  email: string;
+  emailDes: string;
+  // subject
+  subject: string;
+  subjectDes: string;
+  output: string;
+  heading: string;
+}
 
-const settings = [
-  {
-    name: "MANAGER_EMAIL",
-    value: email,
-    des: "Manager email to receive expense email",
-  },
-  {
-    name: "AUTO_APPROVAL_THRESHOLD",
-    value: "2000000",
-    des: "Expense will be auto approved if total value is lower than this threshold",
-  },
-  {
-    name: "EMAIL_SUBJECT",
-    value: "Attention required! A new expense needs your decision",
-    des: "The subject of the email that send to the manager",
-  },
-];
+const email = process.env.EMAIL!;
+const subEmail = process.env.SUB_EMAIL!;
+
+const initValue = {
+  amount: 2000000,
+  amountDes:
+    "Expense will be auto approved if total value is lower than this threshold",
+  email: subEmail,
+  emailDes:
+    "Sending email to this email whenever a new expense needs to be processed",
+  subject: "Attention required! A new expense needs your decision",
+  subjectDes: "The subject of the email that send to the manager",
+  output: "output: Your application settings have been saved successfully",
+  heading: "Create App Settings",
+};
 
 const editValue = {
+  amount: 2300000,
+  amountDes: "Expense will be auto approved if lower than threshold, edited",
   email,
-  threshold: "2300000",
-  subject: "The subject of the email that send to the manager",
+  emailDes: "Sending email to manager email blabla, edited",
+  subject: "New Expense Created - Requesting Your Kind Approval",
+  subjectDes: "The subject of the email, edited",
+  output: "output: Your application settings have been updated successfully",
+  heading: "Editing App Settings",
 };
 
 test.use({ storageState: managerFile });
-test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ page }) => {
   await page.goto(baseURL);
@@ -38,34 +53,54 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
-test("create settings", async ({ page }) => {
-  for (let i = 0; i < settings.length; i++) {
-    const setting = settings[i];
+test("create app settings", async ({ page }) => action({ page, ...initValue }));
 
-    await page.getByRole("button", { name: "New setting" }).click();
-    await page.getByPlaceholder("Enter Settings Name").click();
-    await page.getByPlaceholder("Enter Settings Name").fill(setting.name);
-    await page.getByPlaceholder("Enter Value").click();
-    await page.getByPlaceholder("Enter Value").fill(setting.value);
-    await page.getByPlaceholder("Enter Description").click();
-    await page.getByPlaceholder("Enter Description").fill(setting.des);
-    await page.getByRole("button", { name: "Submit" }).click();
-    await expect(page.getByText("Record Created")).toBeVisible();
-    await expect(page.getByText("Record Created")).toBeHidden();
-    await page.getByRole("link", { name: "Expense Settings" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Application Settings" })
-    ).toBeVisible();
-  }
-});
+test("edit settings", async ({ page }) => action({ page, ...editValue }));
 
-test("edit settings", async ({ page }) => {
-  await page.getByRole("button", { name: "Edit settings" }).click();
-  await expect(page.getByText("Edit application settings")).toBeVisible();
-  await page.getByLabel("Auto Approval Threshold *").click();
-  await page.getByLabel("Auto Approval Threshold *").fill(editValue.threshold);
-  await page.getByLabel("Email Subject *").click();
-  await page.getByLabel("Email Subject *").fill(editValue.subject);
+async function action({
+  page,
+  amount,
+  email,
+  subject,
+  amountDes,
+  emailDes,
+  subjectDes,
+  output,
+  heading,
+}: ActionProps) {
+  await page.getByRole("button", { name: "Add / Edit settings" }).click();
+  await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+  // amount - tab 1
+  await page.getByLabel("Amount *").click();
+  await page.getByLabel("Amount *").fill(amount.toString());
+  await page
+    .getByLabel("Auto approval threshold")
+    .getByLabel("Description")
+    .click();
+  await page
+    .getByLabel("Auto approval threshold")
+    .getByLabel("Description")
+    .fill(amountDes);
+  // tab 2
+  await page.getByRole("tab", { name: "Manager email" }).click();
+  await page.getByLabel("Email *").click();
+  await page.getByText(email).click();
+  await page.getByLabel("Manager email").getByLabel("Description").click();
+  await page
+    .getByLabel("Manager email")
+    .getByLabel("Description")
+    .fill(emailDes);
+  // tab 3
+  await page.getByRole("tab", { name: "Email subject" }).click();
+  await page.getByLabel("Value *").click();
+  await page.getByLabel("Value *").fill(subject);
+  await page.getByLabel("Email subject").getByLabel("Description").click();
+  await page
+    .getByLabel("Email subject")
+    .getByLabel("Description")
+    .fill(subjectDes);
+
+  // next and expect
   await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("alert")).toBeVisible();
-});
+  await expect(page.getByText(output)).toBeVisible();
+}
